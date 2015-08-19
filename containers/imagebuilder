@@ -85,14 +85,14 @@ RUN chmod +x $STARTSCRIPT
 # ######################################################################
 ## TOFIX:
 # # Other python packages
-# RUN pip install pip -U && pip install jsonschema
+# RUN pip3 install jsonschema
 # # Create a basic profile for current user
-# RUN ipython profile create
+# RUN ipython3 profile create
 # # Add offline use of mathjax
-# RUN python -m IPython.external.mathjax
+# RUN python3 -m IPython.external.mathjax
 # # Live slideshows
 # WORKDIR /tmp
 # RUN wget https://github.com/pdonorio/RISE/archive/master.tar.gz \
 #     && tar xvzf *.gz && cd *master && \
-#     python2 setup.py install \
+#     python3 setup.py install \
 #     && rm -rf /tmp/*

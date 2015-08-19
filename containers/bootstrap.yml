@@ -1,0 +1,13 @@
+jupyter:
+    build: ./
+    dockerfile: imagebuilder
+    command: /opt/start
+    ports:
+        - "80:8888"
+    volumes:
+        - ../notebooks:/data
+    labels:
+        com.example.description: "just a test"
+    container_name: notebook
+    stdin_open: true
+    tty: true
