@@ -71,16 +71,7 @@ RUN chmod +x $STARTSCRIPT
 
 # ######################################################################
 
-## LAUNCH WITH COMMAND
-# yourhost$ docker run -it -p 80:8888 -v ./notebooks:/data --name notebook pdonorio/jupy3data
-# root@container:/data# /opt/start
-
-# Before publishing, you may check with
-# $ nosetests notebook
-# inside the docker container
-
-# ######################################################################
-## TOFIX:
+###############################
 # Other python packages
 RUN pip3 install jsonschema
 # Create a basic profile for current user
@@ -88,20 +79,26 @@ RUN ipython3 profile create
 # Link extensions from ipython to jupyter
 RUN mkdir -p $HOME/.local/share/jupyter
 RUN ln -s $HOME/.ipython/nbextensions $HOME/.local/share/jupyter/nbextensions
+
 # Add offline use of mathjax
 RUN python3 -m IPython.external.mathjax
 # RUN wget https://github.com/mathjax/MathJax/archive/2.5.3.zip
 # RUN python3 -m IPython.external.mathjax 2.5.3.zip
 
-# ## TOFIX: not working with jupyter 4
-
 # check JUPYTER_CONFIG_DIR
+ADD jupyconf.ipy /tmp/script.ipy
+RUN ipython /tmp/script.ipy
 
-# # # Live slideshows
-# RUN wget https://github.com/pdonorio/RISE/archive/master.tar.gz \
-#     && tar xvzf *.gz && cd *master && \
-#     python3 setup.py install \
-#     && rm -rf /tmp/*
+# # Live slideshows
+RUN wget https://github.com/pdonorio/RISE/archive/master.tar.gz \
+    && tar xvzf *.gz && cd *master && \
+    python3 setup.py install \
+    && rm -rf /tmp/*
 
+# ######################################################################
 VOLUME /data
 WORKDIR /data
+
+## LAUNCH WITH COMMAND
+# yourhost$ docker run -it -p 80:8888 -v ./notebooks:/data --name notebook pdonorio/jupy3data
+# root@container:/data# /opt/start
