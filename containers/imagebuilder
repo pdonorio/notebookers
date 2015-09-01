@@ -1,0 +1,104 @@
+# Installs Jupyter Notebook and IPython kernel from the current branch
+FROM ubuntu:14.04
+MAINTAINER "Paolo D'Onorio De Meo <p.donoriodemeo@gmail.com>"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# Not essential, but wise to set the lang
+# Note: Users with other languages should set this in their derivative image
+RUN apt-get update && apt-get install -y language-pack-en
+ENV LANGUAGE en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+RUN locale-gen en_US.UTF-8
+RUN dpkg-reconfigure locales
+
+# Python binary dependencies, developer tools
+RUN apt-get update && apt-get install -y -q \
+    build-essential make gcc zlib1g-dev wget git \
+    python python3-dev python3-pip python3-sphinx \
+    libzmq3-dev sqlite3 libsqlite3-dev pandoc \
+    libcurl4-openssl-dev nodejs nodejs-legacy npm
+
+RUN pip3 install --upgrade setuptools pip
+
+RUN mkdir -p /srv/
+WORKDIR /srv/
+RUN git clone --depth 1 https://github.com/ipython/ipykernel /srv/ipykernel
+WORKDIR /srv/ipykernel
+RUN pip3 install --pre -e .
+
+#ADD . /srv/notebook
+RUN git clone https://github.com/jupyter/notebook.git /srv/notebook
+WORKDIR /srv/notebook/
+RUN chmod -R +rX /srv/notebook
+RUN pip3 install -e .[test]
+
+###############################
+# (mini)CONDA package manager
+RUN wget --quiet \
+    https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh && \
+    bash Miniconda-latest-Linux-x86_64.sh -b -p /opt/miniconda && \
+    rm Miniconda-latest-Linux-x86_64.sh
+ENV PATH /opt/miniconda/bin:$PATH
+RUN chmod -R a+rx /opt/miniconda
+
+###############################
+# Install PyData modules and IPython dependencies
+WORKDIR /tmp
+RUN conda update --quiet --yes conda
+ENV CONDAENV "py3k"
+RUN conda create -y -n $CONDAENV python=3 ipython
+RUN conda install -y -n $CONDAENV jupyter ipywidgets \
+        numpy scipy pandas matplotlib seaborn bokeh scikit-learn sympy \
+        six pip sqlalchemy cython pyzmq statsmodels \
+        theano tornado jinja2 sphinx pygments nose readline \
+        openpyxl xlrd
+RUN conda clean -y -t
+
+###############################
+WORKDIR /tmp
+
+# Activate virtualenv and launch notebook
+ENV STARTSCRIPT /opt/start
+#RUN source activate $CONDAENV
+RUN echo "#!/bin/bash" > $STARTSCRIPT
+RUN echo "source /opt/miniconda/bin/activate $CONDAENV" >> $STARTSCRIPT
+RUN echo "# install kernels" >> $STARTSCRIPT
+RUN echo "python3 -m ipykernel.kernelspec" >> $STARTSCRIPT
+RUN echo "jupyter notebook --ip=0.0.0.0 --no-browser" >> $STARTSCRIPT
+RUN chmod +x $STARTSCRIPT
+
+# ######################################################################
+
+###############################
+# Other python packages
+RUN pip3 install jsonschema
+# Create a basic profile for current user
+RUN ipython3 profile create
+# Link extensions from ipython to jupyter
+RUN mkdir -p $HOME/.local/share/jupyter
+RUN ln -s $HOME/.ipython/nbextensions $HOME/.local/share/jupyter/nbextensions
+
+# Add offline use of mathjax
+RUN python3 -m IPython.external.mathjax
+# RUN wget https://github.com/mathjax/MathJax/archive/2.5.3.zip
+# RUN python3 -m IPython.external.mathjax 2.5.3.zip
+
+# check JUPYTER_CONFIG_DIR
+ADD jupyconf.ipy /tmp/script.ipy
+RUN ipython /tmp/script.ipy
+
+# # Live slideshows
+RUN wget https://github.com/pdonorio/RISE/archive/master.tar.gz \
+    && tar xvzf *.gz && cd *master && \
+    python3 setup.py install \
+    && rm -rf /tmp/*
+
+# ######################################################################
+VOLUME /data
+WORKDIR /data
+
+## LAUNCH WITH COMMAND
+# yourhost$ docker run -it -p 80:8888 -v ./notebooks:/data --name notebook pdonorio/jupy3data
+# root@container:/data# /opt/start
