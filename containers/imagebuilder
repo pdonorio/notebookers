@@ -1,6 +1,6 @@
 # Installs Jupyter Notebook and IPython kernel from the current branch
 FROM ubuntu:14.04
-MAINTAINER Paolo
+MAINTAINER "Paolo D'Onorio De Meo <p.donoriodemeo@gmail.com>"
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -94,6 +94,9 @@ RUN python3 -m IPython.external.mathjax
 # RUN python3 -m IPython.external.mathjax 2.5.3.zip
 
 # ## TOFIX: not working with jupyter 4
+
+# check JUPYTER_CONFIG_DIR
+
 # # # Live slideshows
 # RUN wget https://github.com/pdonorio/RISE/archive/master.tar.gz \
 #     && tar xvzf *.gz && cd *master && \
