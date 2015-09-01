@@ -1,5 +1,8 @@
-# Sublime editore
+# Sublime editor
 *.sublime-*
+
+# Ipython / Jupyter
+.ipynb_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
